@@ -1,0 +1,11 @@
+# Git ignore unnecessary files and folders
+venv/
+__pycache__/
+downloads/
+temp/
+*.pyc
+*.pyo
+*.pyd
+*.log
+.DS_Store
+ffmpeg/

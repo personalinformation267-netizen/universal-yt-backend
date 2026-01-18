@@ -1,0 +1,5 @@
+# Add all Python dependencies here
+flask
+flask-cors
+yt-dlp
+requests
