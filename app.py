@@ -43,7 +43,23 @@ app = Flask(__name__, static_folder=None)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 # FFMPEG
-FFMPEG_PATH = "ffmpeg" # Assumes ffmpeg is in PATH (common on Render)
+# FFMPEG
+def get_ffmpeg_path():
+    # 1. Check system PATH
+    if shutil.which("ffmpeg"):
+        return "ffmpeg"
+    
+    # 2. Check local relative path (development env)
+    # Structure: root/backend/app.py and root/ffmpeg/bin/ffmpeg.exe
+    local_bin = os.path.join(BASE_DIR, "..", "ffmpeg", "bin", "ffmpeg.exe")
+    if os.path.exists(local_bin):
+        logger.info(f"Found local ffmpeg: {local_bin}")
+        return os.path.normpath(local_bin)
+    
+    logger.warning("ffmpeg not found in PATH or local directory!")
+    return "ffmpeg" # Fallback
+
+FFMPEG_PATH = get_ffmpeg_path()
 
 # JOBS STORAGE
 JOBS = {}
@@ -193,9 +209,15 @@ def analyze():
 @app.route("/api/download", methods=["POST"])
 def download():
     try:
-        data = request.json
+        # Validate request is JSON
+        if not request.is_json:
+             logger.error("Download endpoint called without JSON content-type")
+             return jsonify({"status": "error", "message": "Content-Type must be application/json"}), 400
+
+        data = request.get_json()
         if not data:
-            return jsonify({"status": "error", "message": "No data"}), 400
+            logger.error("Download endpoint called with empty data")
+            return jsonify({"status": "error", "message": "No data received"}), 400
             
         url = data.get("url")
         if not url:
